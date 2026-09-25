@@ -18,6 +18,7 @@ public class SysDept {
     private Integer delFlag;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
+    private Integer orderNum;
 
     public SysDept(){
 
@@ -93,6 +94,14 @@ public class SysDept {
 
     public void setUpdateTime(LocalDateTime updateTime) {
         this.updateTime = updateTime;
+    }
+
+    public Integer getOrderNum() {
+        return orderNum;
+    }
+
+    public void setOrderNum(Integer orderNum) {
+        this.orderNum = orderNum;
     }
 
     @Override
