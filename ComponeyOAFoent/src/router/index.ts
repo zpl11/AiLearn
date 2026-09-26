@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import ComponeyDept from "@/views/ComponeyDept.vue";
+import UserManagement from "@/views/UserManagement.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -14,6 +15,11 @@ const router = createRouter({
       path: '/ComponeyDept',
       name: 'componeyDept',
       component: ComponeyDept,
+    },
+    {
+      path: '/UserManagement',
+      name: 'userManagement',
+      component: UserManagement,
     },
     {
       path: '/about',
