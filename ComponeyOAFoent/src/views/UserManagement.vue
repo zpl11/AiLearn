@@ -10,6 +10,13 @@ import {
   deleteUser,
   type SysUser
 } from '@/api/user'
+// 1. 增补：引入岗位相关 API 与类型定义
+import {
+  getPostList,
+  getPostIdsByUser,
+  assignUserPosts,
+  type SysPost
+} from '@/api/post'
 
 // --- 1. 类型定义 ---
 interface DeptNode {
@@ -21,6 +28,8 @@ interface DeptNode {
 // 原始全量部门与员工数据（内存支撑高响应度过滤）
 const rawDeptList = ref<SysDept[]>([])
 const rawUserList = ref<SysUser[]>([])
+// 增补：全量启用岗位字典
+const allPostList = ref<SysPost[]>([])
 
 // --- 2. 左侧部门树逻辑 ---
 const treeFilterText = ref('')
@@ -28,7 +37,7 @@ const deptTreeRef = ref<TreeInstance>()
 const currentDeptId = ref<number | string | null>(null)
 const deptTreeData = ref<DeptNode[]>([])
 
-// 将部门扁平列表组装为 Tree 结构[cite: 1]
+// 将部门扁平列表组装为 Tree 结构
 const buildTree = (list: SysDept[], parentId: number | string = 0): DeptNode[] => {
   return list
       .filter((item) => (item.parentId ?? 0) === parentId)
@@ -77,14 +86,20 @@ const searchQuery = reactive({
   status: '',
 })
 
-// 初始化拉取部门树与初始员工全量列表
+// 初始化拉取部门树、员工列表与岗位字典
 const initData = async () => {
   loading.value = true
   try {
-    const [deptRes, userRes] = await Promise.all([getDeptList(), getUserList()])
+    // 增补：同时加载 post 字典
+    const [deptRes, userRes, postRes] = await Promise.all([
+      getDeptList(),
+      getUserList(),
+      getPostList()
+    ])
     rawDeptList.value = deptRes || []
     deptTreeData.value = buildTree(deptRes || [], 0)
     rawUserList.value = userRes || []
+    allPostList.value = (postRes || []).filter((p: SysPost) => p.status === 0)
     filterTableData()
   } finally {
     loading.value = false
@@ -170,7 +185,6 @@ const handleAdd = () => {
   isEdit.value = false
   dialogTitle.value = '新增员工'
   userFormData.userId = undefined
-  // 如果当前选了左侧部门树，默认作为新增员工的部门
   userFormData.deptId = currentDeptId.value ?? undefined
   userFormData.userName = ''
   userFormData.nickName = ''
@@ -191,7 +205,7 @@ const handleEdit = (row: SysUser) => {
   isEdit.value = true
   dialogTitle.value = '修改员工资料'
   Object.assign(userFormData, row)
-  userFormData.password = '' // 编辑时不显示密码
+  userFormData.password = ''
   dialogVisible.value = true
   nextTick(() => {
     userFormRef.value?.clearValidate()
@@ -212,7 +226,6 @@ const submitForm = async () => {
         ElMessage.success('新增成功')
       }
       dialogVisible.value = false
-      // 重新拉取对应部门或全量数据刷新
       if (currentDeptId.value) {
         const res = await getUserByDept(currentDeptId.value)
         rawUserList.value = res || []
@@ -246,6 +259,48 @@ const handleDelete = (row: SysUser) => {
     }
     filterTableData()
   }).catch(() => {})
+}
+
+// --- 5. 核心增补：分配岗位弹窗逻辑 ---
+const postDialogVisible = ref(false)
+const postSubmitting = ref(false)
+const currentAssignUser = reactive({
+  userId: 0,
+  userName: '',
+  nickName: ''
+})
+const selectedPostIds = ref<number[]>([])
+
+// 打开分配岗位对话框并回显
+const handleOpenAssignPost = async (row: SysUser) => {
+  if (!row.userId) return
+  currentAssignUser.userId = row.userId as number
+  currentAssignUser.userName = row.userName
+  currentAssignUser.nickName = row.nickName
+  selectedPostIds.value = []
+
+  postDialogVisible.value = true
+  try {
+    const postIds = await getPostIdsByUser(row.userId)
+    selectedPostIds.value = postIds || []
+  } catch (error) {
+    // 拦截器统一提示
+  }
+}
+
+// 提交岗位分配（先删后插）
+const submitPostAssign = async () => {
+  postSubmitting.value = true
+  try {
+    await assignUserPosts({
+      userId: currentAssignUser.userId,
+      postIds: selectedPostIds.value
+    })
+    ElMessage.success('岗位分配成功')
+    postDialogVisible.value = false
+  } finally {
+    postSubmitting.value = false
+  }
 }
 
 onMounted(() => {
@@ -325,7 +380,7 @@ onMounted(() => {
         </el-form>
       </el-card>
 
-      <!-- 列表与操作区[cite: 3] -->
+      <!-- 列表与操作区 -->
       <el-card class="table-card" shadow="never">
         <div class="toolbar">
           <el-button type="primary" @click="handleAdd">新增员工</el-button>
@@ -359,9 +414,12 @@ onMounted(() => {
             </template>
           </el-table-column>
           <el-table-column prop="createTime" label="创建时间" min-width="170" align="center" />
-          <el-table-column label="操作" width="160" align="center" fixed="right">
+
+          <!-- 操作列增补【分配岗位】按钮，宽度调到 220 避免换行 -->
+          <el-table-column label="操作" width="220" align="center" fixed="right">
             <template #default="{ row }">
               <el-button link type="primary" @click="handleEdit(row)">修改</el-button>
+              <el-button link type="warning" @click="handleOpenAssignPost(row)">分配岗位</el-button>
               <el-button link type="danger" @click="handleDelete(row)">删除</el-button>
             </template>
           </el-table-column>
@@ -369,7 +427,7 @@ onMounted(() => {
       </el-card>
     </div>
 
-    <!-- 5. 增/改 模态对话框 -->
+    <!-- 员工资料增改弹窗 -->
     <el-dialog v-model="dialogVisible" :title="dialogTitle" width="550px" destroy-on-close>
       <el-form ref="userFormRef" :model="userFormData" :rules="formRules" label-width="90px">
         <el-form-item label="归属部门" prop="deptId">
@@ -427,6 +485,58 @@ onMounted(() => {
         </span>
       </template>
     </el-dialog>
+
+    <!-- 核心增补：分配岗位弹窗 -->
+    <el-dialog
+        v-model="postDialogVisible"
+        title="分配岗位"
+        width="500px"
+        destroy-on-close
+    >
+      <div style="padding: 6px 0;">
+        <el-alert
+            type="info"
+            :closable="false"
+            show-icon
+            style="margin-bottom: 16px"
+        >
+          <template #title>
+            正在为员工 <b>{{ currentAssignUser.nickName }}</b>（账号：{{ currentAssignUser.userName }}）分配岗位
+          </template>
+        </el-alert>
+
+        <el-form label-width="80px">
+          <el-form-item label="所属岗位">
+            <el-select
+                v-model="selectedPostIds"
+                multiple
+                filterable
+                placeholder="请选择岗位（支持多选）"
+                style="width: 100%"
+            >
+              <el-option
+                  v-for="post in allPostList"
+                  :key="post.postId"
+                  :label="`${post.postName} (${post.postCode})`"
+                  :value="post.postId"
+              />
+            </el-select>
+          </el-form-item>
+        </el-form>
+      </div>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="postDialogVisible = false">取消</el-button>
+          <el-button
+              type="primary"
+              :loading="postSubmitting"
+              @click="submitPostAssign"
+          >
+            保存分配
+          </el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -473,11 +583,11 @@ onMounted(() => {
     display: flex;
     flex-direction: column;
     gap: 16px;
-    min-width: 0; // 防止 flex 弹性容器被内部表格溢出撑宽
+    min-width: 0;
 
     .search-card {
       :deep(.el-card__body) {
-        padding-bottom: 2px; // 压缩表单间隙
+        padding-bottom: 2px;
       }
     }
 

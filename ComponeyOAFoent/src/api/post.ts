@@ -9,6 +9,12 @@ export interface SysPost {
     createTime?: string
 }
 
+// 员工岗位分配入参载体 DTO
+export interface UserPostAssignDTO {
+    userId: number
+    postIds: number[]
+}
+
 // 1. 获取全量岗位列表
 export const getPostList = () => {
     return request.get<any, SysPost[]>('/system/post/queryAllPost')
@@ -36,4 +42,14 @@ export const deletePost = (postId: number) => {
     return request.delete<any, void>('/system/post/delPost', {
         params: { postId }
     })
+}
+
+// 6. 查询指定员工当前绑定的所有岗位 ID 列表（用于前端多选下拉框回显）
+export const getPostIdsByUser = (userId: number | string) => {
+    return request.get<any, number[]>(`/system/user-post/post-ids/${userId}`)
+}
+
+// 7. 保存/重置员工的岗位分配（先删后插）
+export const assignUserPosts = (data: UserPostAssignDTO) => {
+    return request.put<any, void>('/system/user-post/assign', data)
 }
