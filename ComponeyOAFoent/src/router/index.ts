@@ -3,6 +3,8 @@ import HomeView from '../views/HomeView.vue'
 import ComponeyDept from "@/views/ComponeyDept.vue";
 import UserManagement from "@/views/UserManagement.vue";
 import postManagement from "@/views/post.vue";
+import componeyMenu from "@/views/ComponeyMenu.vue";
+import componeyRole from "@/views/ComponeyRole.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -26,6 +28,16 @@ const router = createRouter({
       path: '/postManagement',
       name: 'postManagement',
       component: postManagement,
+    },
+    {
+      path: '/componeyMenu',
+      name: 'componeyMenu',
+      component: componeyMenu,
+    },
+    {
+      path: '/ComponeyRole',
+      name: 'ComponeyRole',
+      component: componeyRole,
     },
     {
       path: '/about',
