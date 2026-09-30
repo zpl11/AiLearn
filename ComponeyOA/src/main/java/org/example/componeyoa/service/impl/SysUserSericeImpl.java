@@ -2,10 +2,12 @@ package org.example.componeyoa.service.impl;
 
 import org.example.componeyoa.dao.SysUserMapper;
 import org.example.componeyoa.entity.SysUser;
+import org.example.componeyoa.entity.dto.UserRoleDTO;
 import org.example.componeyoa.service.SysUserService;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -81,5 +83,41 @@ public class SysUserSericeImpl implements SysUserService {
             user.setPassword(null);
         }
         return user;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean assignUserRoles(UserRoleDTO dto) {
+        // 0. 参数前置防空校验
+        if (dto == null || dto.getUserId() == null) {
+            throw new IllegalArgumentException("操作失败：请求参数或用户ID不能为空");
+        }
+
+        Long userId = dto.getUserId();
+        List<Long> roleIds = dto.getRoleIds();
+
+        // 1. 业务防御检查：校验目标用户是否存在且未被删除
+        SysUser user = sysUserMapper.selectById(userId);
+        if (user == null || user.getDelFlag() == 1) {
+            throw new IllegalArgumentException("操作失败：目标员工不存在或已被注销");
+        }
+
+        // 2. 清理旧关系：清空该用户当前绑定的所有角色关联记录
+        sysUserMapper.deleteUserRolesByUserId(userId);
+
+        // 3. 写入新关系：如果前端选中了角色，则批量插入
+        if (roleIds != null && !roleIds.isEmpty()) {
+            sysUserMapper.batchInsertUserRoles(userId, roleIds);
+        }
+
+        return true;
+    }
+
+    @Override
+    public List<Long> listRoleIdsByUserId(Long userId) {
+        if (userId == null) {
+            throw new IllegalArgumentException("用户ID不能为空");
+        }
+        return sysUserMapper.selectRoleIdsByUserId(userId);
     }
 }

@@ -10,6 +10,12 @@ export interface SysRole {
     createTime?: string
 }
 
+// 角色分配权限入参契约（对齐后端 RoleMenuDTO）
+export interface RoleMenuPayload {
+    roleId: number
+    menuIds: number[]
+}
+
 // 查询角色列表
 export function getRoleList(params?: { roleName?: string; status?: number | string }) {
     return request<SysRole[]>({
@@ -63,11 +69,14 @@ export function deleteRole(roleIds: number | number[]) {
     })
 }
 
-// 分配权限
+// 分配权限（修正：路径为 /system/role/auth，Body 携带包含 roleId 与 menuIds 的 JSON 对象）
 export function assignRoleMenus(roleId: number, menuIds: number[]) {
     return request({
-        url: `/system/role/${roleId}/menus`,
+        url: '/system/role/auth',
         method: 'put',
-        data: menuIds
+        data: {
+            roleId,
+            menuIds
+        }
     })
 }

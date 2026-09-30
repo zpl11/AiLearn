@@ -15,6 +15,12 @@ export interface SysUser {
     createTime?: string
 }
 
+// 用户角色绑定入参载荷契约（对齐后端 UserRoleDTO）
+export interface UserRolePayload {
+    userId: number | string
+    roleIds: (number | string)[]
+}
+
 export function getUserList() {
     return request({ url: '/system/user/list', method: 'get' })
 }
@@ -33,4 +39,27 @@ export function updateUser(data: SysUser) {
 
 export function deleteUser(userId: number | string) {
     return request({ url: '/system/user/del', method: 'delete', params: { userId } })
+}
+
+// ==================== 增补：用户与角色关联相关接口 ====================
+
+/**
+ * 根据用户 ID 查询已分配的角色 ID 列表（用于弹窗回显勾选）
+ */
+export function getRoleIdsByUser(userId: number | string) {
+    return request({
+        url: `/system/user/${userId}/roleIds`,
+        method: 'get'
+    })
+}
+
+/**
+ * 为员工分配角色（提交保存，对齐后端 /system/user/authRole）
+ */
+export function assignUserRoles(data: UserRolePayload) {
+    return request({
+        url: '/system/user/authRole',
+        method: 'put',
+        data
+    })
 }

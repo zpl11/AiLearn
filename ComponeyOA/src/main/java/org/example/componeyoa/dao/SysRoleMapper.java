@@ -121,4 +121,14 @@ public interface SysRoleMapper {
      */
     @Select("SELECT COUNT(1) FROM sys_user_role WHERE role_id = #{roleId}")
     int countUserRoleByRoleId(@Param("roleId") Long roleId);
+
+    /**
+     * 根据用户 ID 查询该用户关联的所有有效角色列表
+     * 涉及多表连接：sys_role r INNER JOIN sys_user_role ur ON r.role_id = ur.role_id
+     */
+    @Select("SELECT r.role_id, r.role_name, r.role_code, r.role_sort, r.status, r.del_flag " +
+            "FROM sys_role r " +
+            "INNER JOIN sys_user_role ur ON r.role_id = ur.role_id " +
+            "WHERE ur.user_id = #{userId} AND r.status = 0 AND r.del_flag = 0")
+    List<SysRole> selectRolesByUserId(@Param("userId") Long userId);
 }

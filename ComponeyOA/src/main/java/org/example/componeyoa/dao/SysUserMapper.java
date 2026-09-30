@@ -68,4 +68,27 @@ public interface SysUserMapper {
           "WHERE user_id = #{userId}")
   int updateStatus(@Param("userId") Long userId, @Param("status") Integer status);
 
+  /**
+   * 根据用户 ID 删除其已分配的所有角色
+   */
+  @Delete("DELETE FROM sys_user_role WHERE user_id = #{userId}")
+  int deleteUserRolesByUserId(@Param("userId") Long userId);
+
+  /**
+   * 批量为用户分配角色
+   */
+  @Insert("<script>" +
+          "INSERT INTO sys_user_role (user_id, role_id) VALUES " +
+          "<foreach collection='roleIds' item='roleId' separator=','>" +
+          "(#{userId}, #{roleId})" +
+          "</foreach>" +
+          "</script>")
+  int batchInsertUserRoles(@Param("userId") Long userId, @Param("roleIds") List<Long> roleIds);
+
+  /**
+   * 根据用户 ID 查询已分配的角色 ID 列表（用于前端勾选回显）
+   */
+  @Select("SELECT role_id FROM sys_user_role WHERE user_id = #{userId}")
+  List<Long> selectRoleIdsByUserId(@Param("userId") Long userId);
+
 }

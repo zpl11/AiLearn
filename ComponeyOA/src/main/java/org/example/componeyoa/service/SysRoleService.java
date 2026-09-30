@@ -1,6 +1,7 @@
 package org.example.componeyoa.service;
 
 import org.example.componeyoa.entity.SysRole;
+import org.example.componeyoa.entity.dto.RoleMenuDTO;
 
 import java.util.List;
 
@@ -81,4 +82,13 @@ public interface SysRoleService {
      * @return 是否分配成功
      */
     boolean assignMenus(Long roleId, List<Long> menuIds);
+
+
+    /**
+     * 为指定角色分配菜单/权限
+     *
+     * @param dto 角色权限绑定参数
+     * @return 是否分配成功
+     */
+    boolean assignRoleMenus(RoleMenuDTO dto);
 }

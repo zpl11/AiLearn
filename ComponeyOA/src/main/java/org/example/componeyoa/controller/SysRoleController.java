@@ -1,6 +1,7 @@
 package org.example.componeyoa.controller;
 
 import org.example.componeyoa.common.Result;
+import org.example.componeyoa.entity.dto.RoleMenuDTO;
 import org.example.componeyoa.entity.SysRole;
 import org.example.componeyoa.service.SysRoleService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,18 +18,17 @@ public class SysRoleController {
     private SysRoleService sysRoleService;
 
     /**
-     * 查询角色列表（支持按角色名称和状态模糊搜索）
+     * 查询角色列表
      */
     @GetMapping("/list")
     public Result<List<SysRole>> list(
             @RequestParam(value = "roleName", required = false) String roleName,
             @RequestParam(value = "status", required = false) Integer status) {
-        List<SysRole> list = sysRoleService.listRoles(roleName, status);
-        return Result.success(list);
+        return Result.success(sysRoleService.listRoles(roleName, status));
     }
 
     /**
-     * 根据角色 ID 获取角色详细信息
+     * 获取角色详细信息
      */
     @GetMapping("/{roleId}")
     public Result<SysRole> getInfo(@PathVariable("roleId") Long roleId) {
@@ -40,12 +40,11 @@ public class SysRoleController {
     }
 
     /**
-     * 根据角色 ID 查询已分配的菜单/权限 ID 集合（用于角色授权弹窗的树节点回显）
+     * 查询角色已绑定的菜单权限ID列表（树回显）
      */
     @GetMapping("/{roleId}/menuIds")
     public Result<List<Long>> getRoleMenuIds(@PathVariable("roleId") Long roleId) {
-        List<Long> menuIds = sysRoleService.listMenuIdsByRoleId(roleId);
-        return Result.success(menuIds);
+        return Result.success(sysRoleService.listMenuIdsByRoleId(roleId));
     }
 
     /**
@@ -53,54 +52,30 @@ public class SysRoleController {
      */
     @PostMapping
     public Result<Void> add(@RequestBody SysRole role) {
-        try {
-            boolean success = sysRoleService.createRole(role);
-            if (success) {
-                return Result.success();
-            }
-            return Result.error("新增角色失败");
-        } catch (IllegalArgumentException e) {
-            return Result.error(e.getMessage());
-        }
+        boolean success = sysRoleService.createRole(role);
+        return success ? Result.success() : Result.error("新增角色失败");
     }
 
     /**
-     * 修改角色基本信息
+     * 修改角色
      */
     @PutMapping
     public Result<Void> edit(@RequestBody SysRole role) {
-        try {
-            boolean success = sysRoleService.updateRole(role);
-            if (success) {
-                return Result.success();
-            }
-            return Result.error("修改角色失败");
-        } catch (IllegalArgumentException e) {
-            return Result.error(e.getMessage());
-        }
+        boolean success = sysRoleService.updateRole(role);
+        return success ? Result.success() : Result.error("修改角色失败");
     }
 
     /**
-     * 分配角色菜单权限（核心授权接口）
-     * 接收角色 ID 和选中的菜单 ID 数组
+     * 分配角色菜单权限（使用规范 DTO 入参）
      */
-    @PutMapping("/{roleId}/menus")
-    public Result<Void> assignMenus(
-            @PathVariable("roleId") Long roleId,
-            @RequestBody List<Long> menuIds) {
-        try {
-            boolean success = sysRoleService.assignMenus(roleId, menuIds);
-            if (success) {
-                return Result.success();
-            }
-            return Result.error("分配权限失败");
-        } catch (Exception e) {
-            return Result.error("分配权限异常: " + e.getMessage());
-        }
+    @PutMapping("/auth")
+    public Result<Void> assignAuth(@RequestBody RoleMenuDTO dto) {
+        boolean success = sysRoleService.assignRoleMenus(dto);
+        return success ? Result.success() : Result.error("分配权限失败");
     }
 
     /**
-     * 修改角色状态（启用/停用）
+     * 修改角色状态
      */
     @PutMapping("/changeStatus")
     public Result<Void> changeStatus(@RequestBody SysRole role) {
@@ -108,25 +83,15 @@ public class SysRoleController {
             return Result.error("参数缺失：roleId 或 status 不能为空");
         }
         boolean success = sysRoleService.updateRoleStatus(role.getRoleId(), role.getStatus());
-        if (success) {
-            return Result.success();
-        }
-        return Result.error("修改角色状态失败");
+        return success ? Result.success() : Result.error("修改角色状态失败");
     }
 
     /**
-     * 删除角色（支持单选或批量）
+     * 批量删除角色
      */
     @DeleteMapping("/{roleIds}")
     public Result<Void> remove(@PathVariable("roleIds") List<Long> roleIds) {
-        try {
-            boolean success = sysRoleService.deleteRoles(roleIds);
-            if (success) {
-                return Result.success();
-            }
-            return Result.error("删除角色失败");
-        } catch (IllegalStateException e) {
-            return Result.error(e.getMessage());
-        }
+        boolean success = sysRoleService.deleteRoles(roleIds);
+        return success ? Result.success() : Result.error("删除角色失败");
     }
 }

@@ -5,6 +5,7 @@ import org.example.componeyoa.entity.SysUser;
 import org.example.componeyoa.service.SysUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.example.componeyoa.entity.dto.UserRoleDTO;
 
 import java.util.List;
 
@@ -59,4 +60,20 @@ public class SysUserController {
         List<SysUser> userList = userService.queryUserByDeptId(deptId);
         return Result.success(userList);
     }
+
+    @PutMapping("/authRole")
+    public Result<Void> assignRole(@RequestBody UserRoleDTO dto) {
+        boolean success = userService.assignUserRoles(dto);
+        return success ? Result.success() : Result.error("分配角色失败");
+    }
+
+    /**
+     * 根据用户 ID 查询已分配的角色 ID 列表（用于弹窗回显勾选）
+     */
+    @GetMapping("/{userId}/roleIds")
+    public Result<List<Long>> getUserRoleIds(@PathVariable("userId") Long userId) {
+        List<Long> roleIds = userService.listRoleIdsByUserId(userId);
+        return Result.success(roleIds);
+    }
+
 }
