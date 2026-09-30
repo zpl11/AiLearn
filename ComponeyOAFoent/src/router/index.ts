@@ -5,6 +5,7 @@ import UserManagement from "@/views/UserManagement.vue";
 import postManagement from "@/views/post.vue";
 import componeyMenu from "@/views/ComponeyMenu.vue";
 import componeyRole from "@/views/ComponeyRole.vue";
+import login from "@/views/login.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -38,6 +39,11 @@ const router = createRouter({
       path: '/ComponeyRole',
       name: 'ComponeyRole',
       component: componeyRole,
+    },
+    {
+      path: '/login',
+      name: 'login',
+      component: login,
     },
     {
       path: '/about',

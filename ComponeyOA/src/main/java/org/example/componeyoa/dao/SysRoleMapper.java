@@ -131,4 +131,12 @@ public interface SysRoleMapper {
             "INNER JOIN sys_user_role ur ON r.role_id = ur.role_id " +
             "WHERE ur.user_id = #{userId} AND r.status = 0 AND r.del_flag = 0")
     List<SysRole> selectRolesByUserId(@Param("userId") Long userId);
+
+    @Select("SELECT r.role_key " +
+            "FROM sys_role r " +
+            "INNER JOIN sys_user_role ur ON r.role_id = ur.role_id " +
+            "WHERE ur.user_id = #{userId} " +
+            "  AND r.status = 0 " +
+            "  AND r.del_flag = 0")
+    List<String> selectRoleKeysByUserId(@Param("userId") Long userId);
 }
