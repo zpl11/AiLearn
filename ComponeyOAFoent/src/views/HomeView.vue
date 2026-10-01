@@ -10,7 +10,8 @@ import {
   Menu as MenuIcon,
   InfoFilled,
   SwitchButton,
-  Avatar
+  Avatar,
+  Operation // 新增：用于审批流程与模板配置的图标
 } from '@element-plus/icons-vue'
 
 const route = useRoute()
@@ -66,6 +67,7 @@ const handleLogout = () => {
           text-color="#bfcbd9"
           active-text-color="#409EFF"
       >
+        <!-- 系统与权限管理模块 -->
         <el-sub-menu index="system">
           <template #title>
             <el-icon><OfficeBuilding /></el-icon>
@@ -90,6 +92,18 @@ const handleLogout = () => {
           <el-menu-item index="/componeyMenu">
             <el-icon><MenuIcon /></el-icon>
             <span>菜单管理</span>
+          </el-menu-item>
+        </el-sub-menu>
+
+        <!-- 审批中心模块：承载流程定义及后续审批事务流转 -->
+        <el-sub-menu index="flow">
+          <template #title>
+            <el-icon><Operation /></el-icon>
+            <span>审批中心</span>
+          </template>
+          <el-menu-item index="/flowDefinition">
+            <el-icon><Operation /></el-icon>
+            <span>流程定义</span>
           </el-menu-item>
         </el-sub-menu>
 
@@ -125,7 +139,7 @@ const handleLogout = () => {
         </div>
       </el-header>
 
-      <!-- 动态路由展示区（放置之前的页面） -->
+      <!-- 动态路由展示区（挂载 FlowDefinition.vue） -->
       <el-main class="layout-main">
         <router-view />
       </el-main>

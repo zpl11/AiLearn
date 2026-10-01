@@ -6,6 +6,7 @@ import PostManagement from "@/views/post.vue"
 import ComponeyMenu from "@/views/ComponeyMenu.vue"
 import ComponeyRole from "@/views/ComponeyRole.vue"
 import Login from "@/views/login.vue"
+import FlowDefinition from "@/views/FlowDefinition.vue" // 1. 导入流程定义页面组件
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -50,6 +51,12 @@ const router = createRouter({
           name: 'componeyMenu',
           component: ComponeyMenu,
           meta: { title: '菜单管理' }
+        },
+        {
+          path: 'flowDefinition', // 2. 新增流程定义模板路由，对应访问路径为 /flowDefinition
+          name: 'flowDefinition',
+          component: FlowDefinition,
+          meta: { title: '流程定义' }
         },
         {
           path: 'about',
