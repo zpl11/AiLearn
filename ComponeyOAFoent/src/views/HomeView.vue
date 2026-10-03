@@ -11,7 +11,7 @@ import {
   InfoFilled,
   SwitchButton,
   Avatar,
-  Operation // 新增：用于审批流程与模板配置的图标
+  Operation
 } from '@element-plus/icons-vue'
 
 const route = useRoute()
@@ -105,6 +105,11 @@ const handleLogout = () => {
             <el-icon><Operation /></el-icon>
             <span>流程定义</span>
           </el-menu-item>
+          <!-- ✅新增菜单项：审批实例管理，对应路由 flowInstance -->
+          <el-menu-item index="/flowInstance">
+            <el-icon><Operation /></el-icon>
+            <span>审批实例管理</span>
+          </el-menu-item>
         </el-sub-menu>
 
         <el-menu-item index="/about">
@@ -139,7 +144,7 @@ const handleLogout = () => {
         </div>
       </el-header>
 
-      <!-- 动态路由展示区（挂载 FlowDefinition.vue） -->
+      <!-- 动态路由展示区 -->
       <el-main class="layout-main">
         <router-view />
       </el-main>
@@ -217,7 +222,7 @@ const handleLogout = () => {
     }
 
     .layout-main {
-      padding: 0; // 各业务页面内已自带内边距
+      padding: 0;
       flex: 1;
       overflow-y: auto;
     }
