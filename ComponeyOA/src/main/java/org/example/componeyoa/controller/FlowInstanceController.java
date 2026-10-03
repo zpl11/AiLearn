@@ -54,8 +54,9 @@ public class FlowInstanceController {
 
     /**
      * 发起审批（新增流程实例）
+     * 修改了这里的路径，使其匹配前端的 /flow/instance/start
      */
-    @PostMapping
+    @PostMapping("/start") // <-- 就是改这里
     public Result<Void> add(@RequestBody FlowInstanceDTO flowInstanceDTO) {
         try {
             // DTO 转 Entity

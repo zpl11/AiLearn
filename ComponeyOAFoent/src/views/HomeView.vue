@@ -50,7 +50,6 @@ const handleLogout = () => {
   }).catch(() => {})
 }
 </script>
-
 <template>
   <el-container class="layout-container">
     <!-- 1. 左侧侧边栏导航 -->
@@ -105,10 +104,15 @@ const handleLogout = () => {
             <el-icon><Operation /></el-icon>
             <span>流程定义</span>
           </el-menu-item>
-          <!-- ✅新增菜单项：审批实例管理，对应路由 flowInstance -->
+          <!-- 审批实例管理 (如: 我发起的) -->
           <el-menu-item index="/flowInstance">
             <el-icon><Operation /></el-icon>
             <span>审批实例管理</span>
+          </el-menu-item>
+          <!-- ✅ 新增菜单项：我的任务，对应路由 flowTask (支撑待办/已办的流转操作) -->
+          <el-menu-item index="/flowTask">
+            <el-icon><Operation /></el-icon>
+            <span>我的任务</span>
           </el-menu-item>
         </el-sub-menu>
 

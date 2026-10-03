@@ -104,4 +104,23 @@ public class FlowDefinitionController {
         }
         return Result.success();
     }
+
+    /**
+     * 6. 获取可用的流程定义列表 (用于发起申请时的下拉选择)
+     * 请求方式: GET
+     * 路径: /flow/definition/available
+     */
+    @GetMapping("/available")
+    public Result<List<FlowDefinition>> getAvailableList() {
+        // 构建一个状态为 0 (正常启用) 的查询条件
+        FlowDefinition query = new FlowDefinition();
+        query.setStatus(0);
+
+        // 复用 Service 层已有的条件查询方法
+        List<FlowDefinition> list = flowDefinitionService.listFlowDefinitions(query);
+
+        // 哪怕只返回基础实体，Spring 的 Jackson 也会序列化成 JSON
+        // 前端取需要的 defId, flowName, flowCode 即可[cite: 7]
+        return Result.success(list);
+    }
 }

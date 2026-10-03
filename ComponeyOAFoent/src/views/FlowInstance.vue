@@ -1,7 +1,16 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { getFlowInstanceList, getFlowInstanceMyInitiate, getFlowInstanceInfo, deleteFlowInstance, type FlowInstanceVO } from '@/api/FlowInstance'
+import { ElMessage, ElMessageBox, type FormInstance } from 'element-plus'
+import {
+  getFlowInstanceList,
+  getFlowInstanceMyInitiate,
+  deleteFlowInstance,
+  type FlowInstanceVO,
+  // 引入新增的API
+  getAvailableFlowDefs,
+  startFlowInstance,
+  type StartInstanceDTO
+} from '@/api/FlowInstance'
 
 // --- 1.状态与数据 ---
 const loading = ref(false)
@@ -24,7 +33,7 @@ const fetchInstanceData = async () => {
   try {
     let list: FlowInstanceVO[] = []
     if(pageMode.value === 'my'){
-      // 实际项目initiatorId从登录store拿，这里api参数预留
+      // 实际项目initiatorId从登录store拿，这里api参数预留[cite: 6]
       list = await getFlowInstanceMyInitiate()
     }else{
       list = await getFlowInstanceList()
@@ -32,7 +41,7 @@ const fetchInstanceData = async () => {
     rawInstanceList.value = list || []
     filterTableData()
   } catch (error) {
-    // request.ts统一拦截错误提示
+    // request.ts统一拦截错误提示[cite: 6]
   } finally {
     loading.value = false
   }
@@ -78,7 +87,77 @@ const handleDelete = (row:FlowInstanceVO)=>{
 // 查看详情弹窗/抽屉（这里预留，你后续可以做详情Drawer）
 const handleViewDetail = (row:FlowInstanceVO)=>{
   console.log('查看实例详情', row)
-  // 后续：打开详情抽屉，展示formData表单快照、审批流转记录
+  // 后续：打开详情抽屉，展示formData表单快照、审批流转记录[cite: 6]
+}
+
+
+// ==================== 2. 发起审批逻辑 ====================
+
+const applyDrawerVisible = ref(false)
+const applyFormRef = ref<FormInstance>()
+const availableFlows = ref<{ defId: number; flowName: string; flowCode: string }[]>([])
+
+// 发起审批的表单数据 (模拟组装 DTO)
+const applyFormData = reactive({
+  defId: undefined as number | undefined,
+  title: '',
+  // 模拟 JSON 结构，实际业务应依据 defId 动态渲染对应表单并组装
+  formDataJson: '{\n  "申请理由": "请假",\n  "天数": 1\n}'
+})
+
+// 校验规则
+const applyRules = {
+  defId: [{ required: true, message: '请选择审批流程', trigger: 'change' }],
+  title: [{ required: true, message: '请输入审批标题', trigger: 'blur' }],
+  formDataJson: [{ required: true, message: '表单数据不能为空', trigger: 'blur' }]
+}
+
+// 打开“发起申请”抽屉
+const handleApply = async () => {
+  applyDrawerVisible.value = true
+
+  // 拉取下拉框可用的流程定义（接口已脱壳，直接拿数组）
+  try {
+    const res = await getAvailableFlowDefs()
+    availableFlows.value = res || []
+  } catch (error) {
+    // 错误处理由 request.ts 接管
+  }
+}
+
+// 提交发起申请
+const submitApply = async () => {
+  if (!applyFormRef.value) return
+  await applyFormRef.value.validate(async (valid) => {
+    if (!valid) return
+
+    // 校验前端填写的 JSON 格式是否正确
+    try {
+      JSON.parse(applyFormData.formDataJson)
+    } catch (e) {
+      ElMessage.error('表单数据必须是合法的 JSON 格式')
+      return
+    }
+
+    // 组装 DTO[cite: 1]
+    const dto: StartInstanceDTO = {
+      defId: applyFormData.defId!,
+      title: applyFormData.title,
+      formData: applyFormData.formDataJson
+    }
+
+    try {
+      await startFlowInstance(dto)
+      ElMessage.success('审批发起成功！')
+      applyDrawerVisible.value = false
+
+      // 提交成功后，默认切换到“我发起的”列表进行刷新查看
+      pageMode.value = 'my'
+      fetchInstanceData()
+    } catch (error) {
+      // 错误已拦截
+    }
+  })
 }
 
 onMounted(()=>{
@@ -121,8 +200,14 @@ onMounted(()=>{
 
     <el-card class="table-card" shadow="never">
       <div class="toolbar">
-        <el-button :type="pageMode==='all'?'primary':'default'" @click="changeMode('all')">全部审批实例</el-button>
-        <el-button :type="pageMode==='my'?'primary':'default'" @click="changeMode('my')">我发起的</el-button>
+        <div class="toolbar-left">
+          <el-button :type="pageMode==='all'?'primary':'default'" @click="changeMode('all')">全部审批实例</el-button>
+          <el-button :type="pageMode==='my'?'primary':'default'" @click="changeMode('my')">我发起的</el-button>
+        </div>
+        <div class="toolbar-right">
+          <!-- ✅ 新增的 发起审批 按钮 -->
+          <el-button type="success" @click="handleApply">发起审批</el-button>
+        </div>
       </div>
 
       <el-table
@@ -163,6 +248,60 @@ onMounted(()=>{
         </el-table-column>
       </el-table>
     </el-card>
+
+    <!-- ==================== 3. 发起审批 抽屉 ==================== -->
+    <el-drawer
+        v-model="applyDrawerVisible"
+        title="发起审批申请"
+        size="500px"
+        destroy-on-close
+    >
+      <div class="drawer-content">
+        <el-form ref="applyFormRef" :model="applyFormData" :rules="applyRules" label-width="90px">
+
+          <el-form-item label="审批流程" prop="defId">
+            <el-select v-model="applyFormData.defId" placeholder="请选择要发起的流程" style="width: 100%;">
+              <el-option
+                  v-for="item in availableFlows"
+                  :key="item.defId"
+                  :label="item.flowName"
+                  :value="item.defId"
+              >
+                <span style="float: left">{{ item.flowName }}</span>
+                <span style="float: right; color: #8492a6; font-size: 13px">{{ item.flowCode }}</span>
+              </el-option>
+            </el-select>
+          </el-form-item>
+
+          <el-form-item label="审批标题" prop="title">
+            <el-input v-model="applyFormData.title" placeholder="如：张三提交的请假申请" />
+          </el-form-item>
+
+          <!-- 模拟业务表单内容的录入 -->
+          <el-form-item label="表单数据" prop="formDataJson">
+            <template #label>
+              表单数据<br/>
+              <span style="font-size: 12px; color: #909399;">(JSON格式)</span>
+            </template>
+            <el-input
+                v-model="applyFormData.formDataJson"
+                type="textarea"
+                :rows="8"
+                placeholder='请输入标准的JSON字符串，如：{"天数": 3, "事由": "事假"}'
+            />
+          </el-form-item>
+
+        </el-form>
+      </div>
+
+      <template #footer>
+        <div style="flex: auto">
+          <el-button @click="applyDrawerVisible = false">取消</el-button>
+          <el-button type="primary" @click="submitApply">提交申请</el-button>
+        </div>
+      </template>
+    </el-drawer>
+
   </div>
 </template>
 
@@ -173,7 +312,7 @@ onMounted(()=>{
   gap:16px;
   padding:16px;
   height: calc(100vh - 32px);
-  box-sizing:border-box;
+  box-sizing:border-box; /* 锁死盒子模型，防止 padding 撑破容器[cite: 1] */
 
   .search-card{
     :deep(.el-card__body){
@@ -185,8 +324,15 @@ onMounted(()=>{
     display:flex;
     flex-direction:column;
     .toolbar{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       margin-bottom:12px;
     }
   }
+}
+
+.drawer-content {
+  padding: 20px;
 }
 </style>
