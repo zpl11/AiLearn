@@ -94,5 +94,18 @@ public interface FlowNodeConfigMapper {
                          @Param("nodeOrder") Integer nodeOrder,
                          @Param("excludeNodeId") Long excludeNodeId);
 
+    /**
+     * ✅【引擎核心新增】根据流程定义 ID 查询该流程的“第一个审批节点”（按照 node_order 升序取第一条）
+     * 用于用户发起审批时，自动定位第一个节点并派发待办任务
+     *
+     * @param defId 流程定义ID
+     * @return 第一个节点的配置实体
+     */
+    @Select("SELECT node_id, def_id, node_name, node_order, post_id, approve_type, create_time, update_time " +
+            "FROM flow_node_config " +
+            "WHERE def_id = #{defId} " +
+            "ORDER BY node_order ASC " +
+            "LIMIT 1")
+    FlowNodeConfig selectFirstNodeByDefId(@Param("defId") Long defId);
 
 }

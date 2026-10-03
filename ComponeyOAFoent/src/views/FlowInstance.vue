@@ -6,7 +6,6 @@ import {
   getFlowInstanceMyInitiate,
   deleteFlowInstance,
   type FlowInstanceVO,
-  // 引入新增的API
   getAvailableFlowDefs,
   startFlowInstance,
   type StartInstanceDTO
@@ -33,7 +32,7 @@ const fetchInstanceData = async () => {
   try {
     let list: FlowInstanceVO[] = []
     if(pageMode.value === 'my'){
-      // 实际项目initiatorId从登录store拿，这里api参数预留[cite: 6]
+      // 实际项目initiatorId从登录store拿，这里api参数预留[cite: 15]
       list = await getFlowInstanceMyInitiate()
     }else{
       list = await getFlowInstanceList()
@@ -41,7 +40,7 @@ const fetchInstanceData = async () => {
     rawInstanceList.value = list || []
     filterTableData()
   } catch (error) {
-    // request.ts统一拦截错误提示[cite: 6]
+    // request.ts统一拦截错误提示[cite: 15]
   } finally {
     loading.value = false
   }
@@ -84,14 +83,29 @@ const handleDelete = (row:FlowInstanceVO)=>{
   }).catch(()=>{})
 }
 
-// 查看详情弹窗/抽屉（这里预留，你后续可以做详情Drawer）
-const handleViewDetail = (row:FlowInstanceVO)=>{
-  console.log('查看实例详情', row)
-  // 后续：打开详情抽屉，展示formData表单快照、审批流转记录[cite: 6]
+
+// ==================== 2. 查看详情逻辑 ====================
+
+const detailDialogVisible = ref(false)
+const currentInstanceTitle = ref('')
+const parsedDetailData = ref<Record<string, any>>({}) // 用来存放解析后的 JSON 表单数据
+
+const handleViewDetail = (row: FlowInstanceVO) => {
+  currentInstanceTitle.value = row.title || '审批详情'
+
+  // 尝试解析 JSON 格式的 formData
+  try {
+    parsedDetailData.value = row.formData ? JSON.parse(row.formData) : {}
+  } catch (e) {
+    // 如果不是合法的 JSON，就直接作为一个整体字符串放进去展示
+    parsedDetailData.value = { '原始数据': row.formData }
+  }
+
+  detailDialogVisible.value = true
 }
 
 
-// ==================== 2. 发起审批逻辑 ====================
+// ==================== 3. 发起审批逻辑 ====================
 
 const applyDrawerVisible = ref(false)
 const applyFormRef = ref<FormInstance>()
@@ -139,7 +153,6 @@ const submitApply = async () => {
       return
     }
 
-    // 组装 DTO[cite: 1]
     const dto: StartInstanceDTO = {
       defId: applyFormData.defId!,
       title: applyFormData.title,
@@ -205,7 +218,7 @@ onMounted(()=>{
           <el-button :type="pageMode==='my'?'primary':'default'" @click="changeMode('my')">我发起的</el-button>
         </div>
         <div class="toolbar-right">
-          <!-- ✅ 新增的 发起审批 按钮 -->
+          <!-- ✅ 发起审批 按钮 -->
           <el-button type="success" @click="handleApply">发起审批</el-button>
         </div>
       </div>
@@ -249,7 +262,7 @@ onMounted(()=>{
       </el-table>
     </el-card>
 
-    <!-- ==================== 3. 发起审批 抽屉 ==================== -->
+    <!-- ==================== 发起审批 抽屉 ==================== -->
     <el-drawer
         v-model="applyDrawerVisible"
         title="发起审批申请"
@@ -302,6 +315,35 @@ onMounted(()=>{
       </template>
     </el-drawer>
 
+    <!-- ✅ ==================== 查看详情 弹窗 ==================== -->
+    <el-dialog
+        v-model="detailDialogVisible"
+        :title="currentInstanceTitle"
+        width="600px"
+        destroy-on-close
+    >
+      <div class="detail-snapshot">
+        <el-descriptions title="申请表单内容快照" :column="2" border>
+          <!-- 动态遍历解析出来的 JSON 属性并展示 -->
+          <el-descriptions-item
+              v-for="(val, key) in parsedDetailData"
+              :key="key"
+              :label="key"
+          >
+            {{ val }}
+          </el-descriptions-item>
+        </el-descriptions>
+        <div v-if="Object.keys(parsedDetailData).length === 0" style="color: #909399; text-align: center; margin-top: 20px;">
+          暂无表单快照数据
+        </div>
+      </div>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button type="primary" @click="detailDialogVisible = false">关 闭</el-button>
+        </span>
+      </template>
+    </el-dialog>
+
   </div>
 </template>
 
@@ -312,7 +354,7 @@ onMounted(()=>{
   gap:16px;
   padding:16px;
   height: calc(100vh - 32px);
-  box-sizing:border-box; /* 锁死盒子模型，防止 padding 撑破容器[cite: 1] */
+  box-sizing:border-box;
 
   .search-card{
     :deep(.el-card__body){
@@ -334,5 +376,14 @@ onMounted(()=>{
 
 .drawer-content {
   padding: 20px;
+}
+
+/* 详情面板样式 */
+.detail-snapshot {
+  background: #f8f9fa;
+  padding: 16px;
+  border-radius: 4px;
+  max-height: 350px;
+  overflow-y: auto;
 }
 </style>

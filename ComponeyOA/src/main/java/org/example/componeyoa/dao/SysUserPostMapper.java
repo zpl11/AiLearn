@@ -39,10 +39,17 @@ public interface SysUserPostMapper {
     List<SysUserPost> queryAllUserPost();
 
     /**
-     * 根据岗位 ID 查询关联的所有员工绑定记录
+     * 根据岗位 ID 查询关联的所有员工绑定记录（完整对象实体）
      */
     @Select("SELECT user_id, post_id FROM sys_user_post WHERE post_id = #{postId}")
     List<SysUserPost> queryUsersByPostId(@Param("postId") Long postId);
+
+    /**
+     * ✅【引擎核心新增】根据岗位 ID 直接查询该岗位下所有员工的 User_ID 集合
+     * 用于工作流引擎派发待办任务时精准查找办理人
+     */
+    @Select("SELECT user_id FROM sys_user_post WHERE post_id = #{postId}")
+    List<Long> selectUserIdsByPostId(@Param("postId") Long postId);
 
     /**
      * 根据员工 ID 查询关联的所有岗位绑定记录

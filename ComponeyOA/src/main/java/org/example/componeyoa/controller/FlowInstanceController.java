@@ -1,9 +1,11 @@
 package org.example.componeyoa.controller;
 
 import org.example.componeyoa.common.Result;
+import org.example.componeyoa.entity.FlowDefinition;
 import org.example.componeyoa.entity.FlowInstance;
 import org.example.componeyoa.entity.dto.FlowInstanceDTO;
 import org.example.componeyoa.entity.vo.FlowInstanceVO;
+import org.example.componeyoa.service.FlowDefinitionService;
 import org.example.componeyoa.service.FlowInstanceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -19,6 +21,9 @@ public class FlowInstanceController {
     @Autowired
     private FlowInstanceService flowInstanceService;
 
+    @Autowired
+    private FlowDefinitionService flowDefinitionService;
+
     /**
      * 后台多条件查询流程实例列表
      */
@@ -27,7 +32,6 @@ public class FlowInstanceController {
                                              @RequestParam(required = false) Integer status,
                                              @RequestParam(required = false) Long initiatorId) {
         List<FlowInstance> entityList = flowInstanceService.getList(flowCode, status, initiatorId);
-        // 简单把entity转vo，实际项目建议抽转换工具方法
         List<FlowInstanceVO> voList = convertEntityToVOList(entityList);
         return Result.success(voList);
     }
@@ -36,8 +40,11 @@ public class FlowInstanceController {
      * 查询【我发起的】审批列表
      */
     @GetMapping("/myInitiate")
-    public Result<List<FlowInstanceVO>> myInitiate(@RequestParam Long initiatorId) {
-        List<FlowInstance> entityList = flowInstanceService.getMyInitiateList(initiatorId);
+    public Result<List<FlowInstanceVO>> myInitiate() {
+        // 模拟从上下文获取当前登录用户 ID (以后替换为 Token 解析)
+        Long currentUserId = 1L;
+
+        List<FlowInstance> entityList = flowInstanceService.getMyInitiateList(currentUserId);
         List<FlowInstanceVO> voList = convertEntityToVOList(entityList);
         return Result.success(voList);
     }
@@ -53,29 +60,42 @@ public class FlowInstanceController {
     }
 
     /**
-     * 发起审批（新增流程实例）
-     * 修改了这里的路径，使其匹配前端的 /flow/instance/start
+     * 发起审批（新增流程实例，并自动派发第一步待办任务）
      */
-    @PostMapping("/start") // <-- 就是改这里
+    @PostMapping("/start")
     public Result<Void> add(@RequestBody FlowInstanceDTO flowInstanceDTO) {
         try {
-            // DTO 转 Entity
+            if (flowInstanceDTO.getDefId() == null) {
+                return Result.error("流程模板ID不能为空");
+            }
+
+            // 1. 通过 defId 反查模板，拿到真正的 flowCode
+            FlowDefinition definition = flowDefinitionService.getFlowDefinitionById(flowInstanceDTO.getDefId());
+            if (definition == null) {
+                return Result.error("流程模板不存在");
+            }
+
+            // 2. DTO 转 Entity
             FlowInstance flowInstance = new FlowInstance();
             flowInstance.setDefId(flowInstanceDTO.getDefId());
-            flowInstance.setFlowCode(flowInstanceDTO.getFlowCode());
+            flowInstance.setFlowCode(definition.getFlowCode());
             flowInstance.setTitle(flowInstanceDTO.getTitle());
             flowInstance.setFormData(flowInstanceDTO.getFormData());
 
-            // ========= 注意：下面这几个字段业务层从登录上下文获取！=========
-            // flowInstance.setInitiatorId(登录用户ID);
-            // flowInstance.setDeptId(登录用户部门ID);
+            // 3. 模拟当前登录用户发起（后续接入 Token 解析）
+            flowInstance.setInitiatorId(1L);
+            flowInstance.setDeptId(1L);
+
             flowInstance.setCurrentOrder(1);
             flowInstance.setStatus(0);
             flowInstance.setDelFlag(0);
 
+            // 4. 调用 Service 层：不仅插入实例，内部还需完成【查配置 -> 找岗位用户 -> 写入 flow_task 待办】的闭环引擎逻辑
             flowInstanceService.addFlowInstance(flowInstance);
+
             return Result.success();
         } catch (RuntimeException e) {
+            e.printStackTrace();
             return Result.error(e.getMessage());
         }
     }
@@ -107,9 +127,6 @@ public class FlowInstanceController {
     }
 
     // ---------------- 内部转换工具方法：Entity → VO ----------------
-    /**
-     * 单个对象转换
-     */
     private FlowInstanceVO convertEntityToVO(FlowInstance entity) {
         if (entity == null) {
             return null;
@@ -127,13 +144,9 @@ public class FlowInstanceController {
         vo.setDelFlag(entity.getDelFlag());
         vo.setCreateTime(entity.getCreateTime());
         vo.setUpdateTime(entity.getUpdateTime());
-        // 扩展字段 initiatorNickName、flowName 需要联表查询后在这里赋值
         return vo;
     }
 
-    /**
-     * 集合转换
-     */
     private List<FlowInstanceVO> convertEntityToVOList(List<FlowInstance> entityList) {
         List<FlowInstanceVO> voList = new ArrayList<>();
         for (FlowInstance entity : entityList) {
@@ -141,5 +154,4 @@ public class FlowInstanceController {
         }
         return voList;
     }
-
 }
