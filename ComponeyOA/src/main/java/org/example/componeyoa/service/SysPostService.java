@@ -23,4 +23,6 @@ public interface SysPostService {
 
     // 根据职位id查询
     SysPost queryPostByPostId(Long postId);
+
+    List<SysPost> listAllActivePosts();
 }

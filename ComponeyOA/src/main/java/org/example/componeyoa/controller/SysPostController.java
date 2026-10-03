@@ -71,4 +71,12 @@ public class SysPostController {
             return Result.error(e.getMessage());
         }
     }
+
+    /**
+     * 获取所有启用的岗位列表（供下拉选择器使用）
+     */
+    @GetMapping("/listAll")
+    public Result<List<SysPost>> listAll() {
+        return Result.success(postService.listAllActivePosts());
+    }
 }

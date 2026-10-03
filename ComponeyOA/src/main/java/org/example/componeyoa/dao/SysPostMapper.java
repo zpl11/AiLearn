@@ -54,4 +54,9 @@ public interface SysPostMapper {
             "FROM sys_post " +
             "WHERE post_code = #{postCode} AND del_flag = 0 LIMIT 1")
     SysPost selectByPostCode(@Param("postCode") String postCode);
+
+    @Select("SELECT post_id, post_name, post_code FROM sys_post " +
+            "WHERE status = 0 AND del_flag = 0 " +
+            "ORDER BY post_sort ASC")
+    List<SysPost> selectAllActivePosts();
 }

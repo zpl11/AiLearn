@@ -72,4 +72,9 @@ public class SysPostServiceImpl implements SysPostService {
         }
         return sysPostMapper.queryByIdSysPost(postId);
     }
+
+    @Override
+    public List<SysPost> listAllActivePosts() {
+        return sysPostMapper.selectAllActivePosts();
+    }
 }

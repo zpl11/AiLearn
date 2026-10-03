@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, nextTick } from 'vue'
+import NodeConfigDrawer from './NodeConfigDrawer.vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import {
   getFlowDefinitionList,
@@ -13,6 +14,8 @@ import {
 const loading = ref(false)
 const rawFlowList = ref<FlowDefinition[]>([]) // 原始列表缓存
 const tableData = ref<FlowDefinition[]>([])    // 表格展示数据
+// 声明组件实例 ref
+const nodeDrawerRef = ref<InstanceType<typeof NodeConfigDrawer>>()
 
 // 搜索条件
 const searchQuery = reactive({
@@ -155,7 +158,11 @@ const handleDelete = (row: FlowDefinition) => {
 
 // 节点配置弹窗预留入口
 const handleConfigNodes = (row: FlowDefinition) => {
-  ElMessage.info(`进入【${row.flowName}】的节点流转配置（下一步即将对接 flow_node_config）`)
+  if (!row.defId) return
+  nodeDrawerRef.value?.open({
+    defId: row.defId,
+    flowName: row.flowName
+  })
 }
 
 onMounted(() => {
@@ -286,6 +293,10 @@ onMounted(() => {
         </span>
       </template>
     </el-dialog>
+
+    <!-- 4. 节点配置抽屉 -->
+    <NodeConfigDrawer ref="nodeDrawerRef" />
+
   </div>
 </template>
 
