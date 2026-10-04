@@ -16,11 +16,11 @@ const fetchTaskList = async () => {
   loading.value = true
   try {
     if (activeTab.value === 'todo') {
-      const res = await getMyTodoList()
-      tableData.value = res.data || []
+      const res: any = await getMyTodoList()
+      tableData.value = Array.isArray(res) ? res : (res?.data || [])
     } else {
-      const res = await getMyDoneList(doneStatusFilter.value)
-      tableData.value = res.data || []
+      const res: any = await getMyDoneList(doneStatusFilter.value)
+      tableData.value = Array.isArray(res) ? res : (res?.data || [])
     }
   } catch (error) {
     // request.ts 统一处理报错

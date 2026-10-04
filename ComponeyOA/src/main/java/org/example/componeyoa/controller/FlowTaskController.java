@@ -1,6 +1,7 @@
 package org.example.componeyoa.controller;
 
 import org.example.componeyoa.common.Result;
+import org.example.componeyoa.common.UserContext;
 import org.example.componeyoa.entity.dto.ProcessTaskDTO;
 import org.example.componeyoa.entity.vo.FlowTaskVO;
 import org.example.componeyoa.service.FlowTaskService;
@@ -29,25 +30,30 @@ public class FlowTaskController {
      */
     @GetMapping("/todo")
     public Result<List<FlowTaskVO>> getMyTodo() {
-        // 模拟从上下文或 Token 拦截器中获取当前登录用户的 userId
-        // （对应模块1中的 ThreadLocal 或 JWT 提取机制）[cite: 3]
-        Long currentUserId = 1L;
+        // 从上下文/ThreadLocal 中提取当前登录用户的 userId
+        Long currentUserId = UserContext.getUserId();
+        if (currentUserId == null) {
+            return Result.error("未获取到当前登录用户信息，请重新登录");
+        }
 
         List<FlowTaskVO> list = flowTaskService.getMyTodoList(currentUserId);
 
-        // 使用 Result<List<FlowTaskVO>> 的方式来返回 data 中的数据列表[cite: 1]
+        // 使用 Result<List<FlowTaskVO>> 的方式来返回 data 中的数据列表
         return Result.success(list);
     }
 
     /**
      * 查询我的已办列表
-     * 规范动词：@GetMapping 查[cite: 1]
-     * 补充说明：如果是 URL 上的简单参数（如 ?status=1），则使用 @RequestParam[cite: 1]
+     * 规范动词：@GetMapping 查
+     * 补充说明：如果是 URL 上的简单参数（如 ?status=1），则使用 @RequestParam
      */
     @GetMapping("/done")
     public Result<List<FlowTaskVO>> getMyDone(@RequestParam(value = "status", required = false) Integer status) {
-        // 同理，获取当前登录用户
-        Long currentUserId = 1L;
+        // 从上下文/ThreadLocal 中提取当前登录用户的 userId
+        Long currentUserId = UserContext.getUserId();
+        if (currentUserId == null) {
+            return Result.error("未获取到当前登录用户信息，请重新登录");
+        }
 
         List<FlowTaskVO> list = flowTaskService.getMyDoneList(currentUserId, status);
         return Result.success(list);

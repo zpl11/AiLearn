@@ -37,17 +37,17 @@ export interface Result<T = any> {
  * 获取我的待办任务列表 (GET /system/task/todo)[cite: 1]
  */
 export function getMyTodoList() {
-    return request<Result<FlowTaskVO[]>>({
+    return request<FlowTaskVO[]>({
         url: '/system/task/todo',
         method: 'get'
     })
 }
 
 /**
- * 获取我的已办任务列表 (GET /system/task/done)[cite: 1]
+ * 获取我的已办任务列表 (GET /system/task/done)
  */
 export function getMyDoneList(status?: number) {
-    return request<Result<FlowTaskVO[]>>({
+    return request<FlowTaskVO[]>({
         url: '/system/task/done',
         method: 'get',
         params: { status } // 对应 @RequestParam

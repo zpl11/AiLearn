@@ -16,6 +16,12 @@ public class JwtInterceptor implements HandlerInterceptor {
             return true;
         }
 
+        // 0. 白名单兜底放行：登录接口与错误页面无需 Token
+        String uri = request.getRequestURI();
+        if (uri.contains("/auth/login") || uri.contains("/error")) {
+            return true;
+        }
+
         // 1. 提取 Authorization 头部
         String authHeader = request.getHeader("Authorization");
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {

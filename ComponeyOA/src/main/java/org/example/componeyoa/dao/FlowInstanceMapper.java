@@ -96,4 +96,27 @@ public interface FlowInstanceMapper {
                                   @Param("initiatorId") Long initiatorId,
                                   @Param("delFlag") Integer delFlag);
 
+    // ==================== 7. 流转状态推进 ====================
+    /**
+     * 审批流转推进：更新当前节点序号与实例状态
+     */
+    @Update("UPDATE flow_instance SET " +
+            "current_order = #{currentOrder}, " +
+            "status = #{status}, " +
+            "update_time = NOW() " +
+            "WHERE instance_id = #{instanceId}")
+    int updateProgress(@Param("instanceId") Long instanceId,
+                       @Param("currentOrder") Integer currentOrder,
+                       @Param("status") Integer status);
+
+    /**
+     * 更新流程实例整体状态（如 1已通过 或 2已驳回）
+     */
+    @Update("UPDATE flow_instance SET " +
+            "status = #{status}, " +
+            "update_time = NOW() " +
+            "WHERE instance_id = #{instanceId}")
+    int updateStatus(@Param("instanceId") Long instanceId,
+                     @Param("status") Integer status);
+
 }

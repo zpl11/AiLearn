@@ -98,4 +98,10 @@ public interface FlowTaskMapper {
             "  AND task_status = 0")
     int cancelOtherTasksInSameStep(@Param("instanceId") Long instanceId, @Param("stepOrder") Integer stepOrder);
 
+    /**
+     * 统计某流程实例指定节点下，处于指定状态的任务数量（用于会签模式判定）
+     */
+    @Select("SELECT COUNT(1) FROM flow_task WHERE instance_id = #{instanceId} AND step_order = #{stepOrder} AND task_status = #{taskStatus}")
+    int countTasksByStatus(@Param("instanceId") Long instanceId, @Param("stepOrder") Integer stepOrder, @Param("taskStatus") Integer taskStatus);
+
 }

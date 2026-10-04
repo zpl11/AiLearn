@@ -1,12 +1,15 @@
 package org.example.componeyoa.controller;
 
 import org.example.componeyoa.common.Result;
+import org.example.componeyoa.common.UserContext;
 import org.example.componeyoa.entity.FlowDefinition;
 import org.example.componeyoa.entity.FlowInstance;
+import org.example.componeyoa.entity.SysUser;
 import org.example.componeyoa.entity.dto.FlowInstanceDTO;
 import org.example.componeyoa.entity.vo.FlowInstanceVO;
 import org.example.componeyoa.service.FlowDefinitionService;
 import org.example.componeyoa.service.FlowInstanceService;
+import org.example.componeyoa.service.SysUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,6 +26,9 @@ public class FlowInstanceController {
 
     @Autowired
     private FlowDefinitionService flowDefinitionService;
+
+    @Autowired
+    private SysUserService sysUserService;
 
     /**
      * 后台多条件查询流程实例列表
@@ -41,8 +47,11 @@ public class FlowInstanceController {
      */
     @GetMapping("/myInitiate")
     public Result<List<FlowInstanceVO>> myInitiate() {
-        // 模拟从上下文获取当前登录用户 ID (以后替换为 Token 解析)
-        Long currentUserId = 1L;
+        // 从当前登录线程上下文获取真实用户 ID
+        Long currentUserId = UserContext.getUserId();
+        if (currentUserId == null) {
+            return Result.error("未获取到当前登录用户信息，请重新登录");
+        }
 
         List<FlowInstance> entityList = flowInstanceService.getMyInitiateList(currentUserId);
         List<FlowInstanceVO> voList = convertEntityToVOList(entityList);
@@ -82,9 +91,15 @@ public class FlowInstanceController {
             flowInstance.setTitle(flowInstanceDTO.getTitle());
             flowInstance.setFormData(flowInstanceDTO.getFormData());
 
-            // 3. 模拟当前登录用户发起（后续接入 Token 解析）
-            flowInstance.setInitiatorId(1L);
-            flowInstance.setDeptId(1L);
+            // 3. 从上下文获取当前登录用户发起，并补充部门 ID
+            Long currentUserId = UserContext.getUserId();
+            if (currentUserId == null) {
+                return Result.error("未获取到当前登录用户信息，请重新登录");
+            }
+            flowInstance.setInitiatorId(currentUserId);
+
+            SysUser currentUser = sysUserService.queryUserByUserId(currentUserId);
+            flowInstance.setDeptId(currentUser != null && currentUser.getDeptId() != null ? currentUser.getDeptId() : 0L);
 
             flowInstance.setCurrentOrder(1);
             flowInstance.setStatus(0);

@@ -108,4 +108,19 @@ public interface FlowNodeConfigMapper {
             "LIMIT 1")
     FlowNodeConfig selectFirstNodeByDefId(@Param("defId") Long defId);
 
+    /**
+     * ✅【引擎核心新增】根据流程定义 ID 和当前阶段序号，查询下一个审批节点
+     * 用于节点审批通过后推进下一节点待办
+     *
+     * @param defId 流程定义ID
+     * @param currentOrder 当前节点序号
+     * @return 下一个节点的配置实体（若为 null 表示已是终审）
+     */
+    @Select("SELECT node_id, def_id, node_name, node_order, post_id, approve_type, create_time, update_time " +
+            "FROM flow_node_config " +
+            "WHERE def_id = #{defId} AND node_order > #{currentOrder} " +
+            "ORDER BY node_order ASC " +
+            "LIMIT 1")
+    FlowNodeConfig selectNextNode(@Param("defId") Long defId, @Param("currentOrder") Integer currentOrder);
+
 }
