@@ -1,6 +1,8 @@
 package org.example.componeyoa.controller;
 
 import org.example.componeyoa.common.Result;
+import org.example.componeyoa.common.annotation.Log;
+import org.example.componeyoa.common.enums.BusinessType;
 import org.example.componeyoa.entity.SysPost;
 import org.example.componeyoa.service.SysPostService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +19,7 @@ public class SysPostController {
     private SysPostService postService;
 
     // 1. 新增岗位
+    @Log(title = "岗位管理", businessType = BusinessType.INSERT)
     @PostMapping("/addPost")
     public Result<Void> addPost(@RequestBody SysPost sysPost) {
         try {
@@ -29,6 +32,7 @@ public class SysPostController {
     }
 
     // 2. 删除岗位
+    @Log(title = "岗位管理", businessType = BusinessType.DELETE)
     @DeleteMapping("/delPost")
     public Result<Void> delPost(@RequestParam("postId") Long postId) {
         try {
@@ -40,6 +44,7 @@ public class SysPostController {
     }
 
     // 3. 修改岗位
+    @Log(title = "岗位管理", businessType = BusinessType.UPDATE)
     @PutMapping("/updatePost")
     public Result<Void> updatePost(@RequestBody SysPost sysPost) {
         try {

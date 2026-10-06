@@ -1,6 +1,8 @@
 package org.example.componeyoa.controller;
 
 import org.example.componeyoa.common.Result;
+import org.example.componeyoa.common.annotation.Log;
+import org.example.componeyoa.common.enums.BusinessType;
 import org.example.componeyoa.entity.SysUser;
 import org.example.componeyoa.service.SysUserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +20,7 @@ public class SysUserController {
     private SysUserService userService;
 
     // 1. 新增用户（接收 JSON 体，必须使用 @RequestBody）
+    @Log(title = "用户管理", businessType = BusinessType.INSERT)
     @PostMapping("/add")
     public Result<Void> addUser(@RequestBody SysUser sysUser) {
         boolean success = userService.createSysUser(sysUser);
@@ -28,6 +31,7 @@ public class SysUserController {
     }
 
     // 2. 删除用户（路径传参或 URL 参数均可）
+    @Log(title = "用户管理", businessType = BusinessType.DELETE)
     @DeleteMapping("/del")
     public Result<Void> delUser(@RequestParam("userId") Long userId) {
         boolean success = userService.delSysUser(userId);
@@ -38,6 +42,7 @@ public class SysUserController {
     }
 
     // 3. 修改用户（接收 JSON 体）
+    @Log(title = "用户管理", businessType = BusinessType.UPDATE)
     @PutMapping("/update")
     public Result<Void> updateUser(@RequestBody SysUser sysUser) {
         boolean success = userService.updateSysUser(sysUser);
@@ -61,6 +66,7 @@ public class SysUserController {
         return Result.success(userList);
     }
 
+    @Log(title = "用户管理", businessType = BusinessType.GRANT)
     @PutMapping("/authRole")
     public Result<Void> assignRole(@RequestBody UserRoleDTO dto) {
         boolean success = userService.assignUserRoles(dto);

@@ -1,6 +1,8 @@
 package org.example.componeyoa.controller;
 
 import org.example.componeyoa.common.Result;
+import org.example.componeyoa.common.annotation.Log;
+import org.example.componeyoa.common.enums.BusinessType;
 import org.example.componeyoa.entity.SysDept;
 import org.example.componeyoa.service.SysDeptService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +33,7 @@ public class SysDeptController {
         return Result.success(dept);
     }
 
+    @Log(title = "部门管理", businessType = BusinessType.INSERT)
     @PostMapping
     public Result<Void> add(@RequestBody SysDept dept){
         try{
@@ -41,6 +44,7 @@ public class SysDeptController {
         }
     }
 
+    @Log(title = "部门管理", businessType = BusinessType.UPDATE)
     @PutMapping
     public Result<Void> edit(@RequestBody SysDept dept){
         try{
@@ -51,6 +55,7 @@ public class SysDeptController {
         }
     }
 
+    @Log(title = "部门管理", businessType = BusinessType.DELETE)
     @DeleteMapping("/{deptId}")
     public Result<Void> remove(@PathVariable("deptId") Long deptId) {
         try{
