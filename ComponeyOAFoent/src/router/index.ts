@@ -22,6 +22,7 @@ import FlowInstance from "@/views/FlowInstance.vue"
 // ✅ 新增导入：刚刚写好的审批任务明细页面 (我的待办/已办)
 import FlowTask from "@/views/FlowTask.vue"
 import SysOperLog from "@/views/SysOperLog.vue"
+import SysErrorLog from "@/views/SysErrorLog.vue"
 
 // 显式声明 routes 的类型为 RouteRecordRaw[]
 const routes: Array<RouteRecordRaw> = [
@@ -72,6 +73,12 @@ const routes: Array<RouteRecordRaw> = [
         name: 'operLog',
         component: SysOperLog,
         meta: { title: '操作日志' }
+      },
+      {
+        path: 'errorLog',
+        name: 'errorLog',
+        component: SysErrorLog,
+        meta: { title: '异常监控日志' }
       },
       // ================= 审批中心模块 =================
       {

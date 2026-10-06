@@ -12,7 +12,8 @@ import {
   SwitchButton,
   Avatar,
   Operation,
-  Document
+  Document,
+  WarningFilled
 } from '@element-plus/icons-vue'
 
 const route = useRoute()
@@ -96,6 +97,10 @@ const handleLogout = () => {
           <el-menu-item index="/operLog">
             <el-icon><Document /></el-icon>
             <span>操作日志</span>
+          </el-menu-item>
+          <el-menu-item index="/errorLog">
+            <el-icon><WarningFilled /></el-icon>
+            <span>异常监控</span>
           </el-menu-item>
         </el-sub-menu>
 
